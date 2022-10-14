@@ -1,0 +1,24 @@
+{
+  "name": "pico-tiny-tanks",
+  "version": "1.0.0",
+  "description": "tiny tanks pico 8 game",
+  "main": "client.js",
+  "scripts": {
+    "start": "node server/server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ethanjurman/pico-tiny-tanks.git"
+  },
+  "author": "Ethan Jurman",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ethanjurman/pico-tiny-tanks/issues"
+  },
+  "homepage": "https://github.com/ethanjurman/pico-tiny-tanks#readme",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.5.2"
+  }
+}

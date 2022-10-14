@@ -2,6 +2,8 @@
   <head>
     <title>PICO-8 Cartridge</title>
     <meta name="viewport" content="width=device-width, user-scalable=no" />
+    <script src="/socket.io/socket.io.js" defer></script>
+    <script src="client.js" defer></script>
     <script type="text/javascript">
       // Default shell for PICO-8 0.2.2 (includes @weeble's gamepad mod 1.0)
       // This file is available under a CC0 license https://creativecommons.org/share-your-work/public-domain/cc0/
@@ -1046,7 +1048,7 @@
       .p8_start_button{
       	cursor:pointer;
       	background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAIAAAACACAIAAABMXPacAAABE0lEQVR4Ae3dwW2DMBQA0CrKBN2iU3SpHHJDuXHIUp2iW3SGHpBcZJuPqygEi/eE0A/5Nuh/G65vAPAaw/UyHdU45aTzg2Pnf/FXxzKeF26pAS35qzO83Km7Jv03Z7hebuN9tzuggwbcxnuqYJy2dH0qeuM8GzvvbZnPF2z78m+ff4c9AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAh9vn9MRxCnn2VcnWo1oWWexmcLbtdNA4LzPKeMl6oWF7e8bzUhyM/Gblb901N7kOKvn+/q9dWVm4Y/WJHV5mXP2f0rKNgNceYzdkA1bSc7YOsGZO/ZluUffwOyqsUfgKM0AAAAAAAAAACAo/sFXHOPyuJxy/cAAAAQdEVYdExvZGVQTkcAMjAxMTAyMjHjWbbBAAAAAElFTkSuQmCC");
-      	-repeat center;
+      	/* -repeat center; */
       	-webkit-background-size:cover; -moz-background-size:cover; -o-background-size:cover; background-size:cover;
       }
 
