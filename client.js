@@ -21,8 +21,13 @@ socket.emit('room-join', { roomId: 111 });
 // const socketNewGame = (seed) => {
 //   socket.emit("action", { action: "new-game", seed, roomId });
 // }
-let playerId = 0;
+
+let playerId = null;
+
 function onFrameUpdate() {
+  if (window.pico8_gpio[0] !== undefined && playerId === null) {
+    playerId = window.pico8_gpio[0];
+  }
   if (playerId === window.pico8_gpio[0]) {
     socket.volatile.emit("tank_update", window.pico8_gpio.slice(0, 4));
   }
@@ -34,6 +39,7 @@ function onFrameUpdate() {
 window.requestAnimationFrame(onFrameUpdate);
 
 socket.on('tank_update_from_server', (updatedTankData) => {
+  if (playerId === null) { return; }
   for (let i = 0; i < 4; i++) {
     window.pico8_gpio[i] = updatedTankData[i];
   }
