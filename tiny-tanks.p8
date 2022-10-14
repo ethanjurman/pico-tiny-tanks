@@ -88,6 +88,7 @@ function update_tank(p_num)
  	write_gpio(p_num)
 	else
  	read_gpio(p_num)
+ 	return
  end
  if (plyrs[p_num].hp < 0) then
  	return -- is ded
@@ -97,56 +98,56 @@ function update_tank(p_num)
  if plyrs[p_num].pushback > 0 then
   plyrs[p_num].pushback-=1
  end
- if btn(⬆️,p_num) or 
-    btn(➡️,p_num) or 
-    btn(⬇️,p_num) or 
-    btn(⬅️,p_num) then
+ if btn(⬆️) or 
+    btn(➡️) or 
+    btn(⬇️) or 
+    btn(⬅️) then
   sfx(1)
  end
-	if btn(⬆️,p_num) and 
-	   btn(➡️,p_num) then
+	if btn(⬆️) and 
+	   btn(➡️) then
 	 plyrs[p_num].y-=0.75
 	 plyrs[p_num].x+=0.75
 	 plyrs[p_num].dir=1
 	 return
 	end
-	if btn(➡️,p_num) and 
-	   btn(⬇️,p_num) then
+	if btn(➡️) and 
+	   btn(⬇️) then
 	 plyrs[p_num].y+=0.75
 	 plyrs[p_num].x+=0.75
 	 plyrs[p_num].dir=3
 	 return
 	end
-	if btn(⬇️,p_num) and 
-	   btn(⬅️,p_num) then
+	if btn(⬇️) and 
+	   btn(⬅️) then
 	 plyrs[p_num].y+=0.75
 	 plyrs[p_num].x-=0.75
 	 plyrs[p_num].dir=5
 	 return
 	end
-	if btn(⬅️,p_num) and 
-	   btn(⬆️,p_num) then
+	if btn(⬅️) and 
+	   btn(⬆️) then
 	 plyrs[p_num].x-=0.75
 	 plyrs[p_num].y-=0.75
 	 plyrs[p_num].dir=7
 	 return
 	end
-	if btn(⬆️,p_num) then 
+	if btn(⬆️) then 
 	 plyrs[p_num].y-=1
 	 plyrs[p_num].dir=0
 	 return
 	end
-	if btn(⬇️,p_num) then
+	if btn(⬇️) then
 	 plyrs[p_num].y+=1
 	 plyrs[p_num].dir=4
 	 return
 	end
-	if btn(⬅️,p_num) then
+	if btn(⬅️) then
 	 plyrs[p_num].x-=1
 	 plyrs[p_num].dir=6
 	 return
 	end
-	if btn(➡️,p_num) then
+	if btn(➡️) then
 	 plyrs[p_num].x+=1
 	 plyrs[p_num].dir=2
 	 return
@@ -158,31 +159,6 @@ function draw_tank_hp(p_num)
 	for hp=1,tank.hp do
   pset(tank.x-4+hp,tank.y+6,8)
  end
-end
-
-function write_gpio(p_num)
-	local tank=plyrs[p_num]
- -- send player tank number
-	poke(0x5f80, p_num)
-	-- send player x, y
-	poke(0x5f81, tank.x) 
-	poke(0x5f82, tank.y)
-	-- send player direction
-	poke(0x5f83, tank.dir)
-end
-
-function read_gpio(p_num)
-	-- read player tank number
- if (p_num == peek(0x5f80)) then
-		local tank=plyrs[p_num]
-		-- read player x, y
-		tank.x=peek(0x5f81) 
-		tank.y=peek(0x5f82)
-		-- read player direction
-		tank.dir=peek(0x5f83)
-	
-		plyrs[p_num]=tank
-	end
 end
 
 function draw_tank(p_num)
@@ -233,9 +209,12 @@ function is_ignore(blt)
 end
 
 function shoot_bullet(p_num)
+ if not selected_player==p_num then
+ 	return
+ end
  local did_fire=false
  -- tiny bullets
-	if btnp(🅾️,p_num) then
+	if btnp(🅾️) then
 	 for b=1,10 do
 	  if is_ignore(plyrs[p_num].blts[b]) then
 	   sfx(0)
@@ -255,7 +234,7 @@ function shoot_bullet(p_num)
 	 end
 	end
 	-- big bullet
-	if btnp(❎,p_num) then
+	if btnp(❎) then
 	 for b=1,8 do
 	  -- if 3 slots are empty, fire big bullet
 	  b1=is_ignore(plyrs[p_num].blts[b])
@@ -445,6 +424,51 @@ function overlap_tank(x1,y1,h1,w1,tank_num)
 	 4,
 	 4
 	)
+end
+-->8
+-- gpio (◆netcode◆)
+
+function write_gpio(p_num)
+	local tank=plyrs[p_num]
+ -- send player tank number
+	poke(0x5f80, p_num)
+	-- send player x, y
+	poke(0x5f81, tank.x) 
+	poke(0x5f82, tank.y)
+	-- send player direction
+	poke(0x5f83, tank.dir)
+	-- send player hp
+	poke(0x5f84, tank.hp)
+	for b=1,10 do
+	 -- jump by 3 for each bullet
+	 --  to give us x, y, state
+	 local blt_addr=0x5f84+b*3
+		poke(blt_addr, tank.blts[b][1])
+		poke(blt_addr+1, tank.blts[b][2])
+		poke(blt_addr+2, tank.blts[b][3])
+	end
+end
+
+function read_gpio(p_num)
+	-- read player tank number
+ if (p_num == peek(0x5f80)) then
+		local tank=plyrs[p_num]
+		-- read player x, y
+		tank.x=peek(0x5f81) 
+		tank.y=peek(0x5f82)
+		-- read player direction
+		tank.dir=peek(0x5f83)
+		tank.hp=peek(0x5f84)
+		for b=1,10 do
+		 -- jump by 3 for each bullet
+		 --  to give us x, y, state
+		 local blt_addr=0x5f84+b*3
+			tank.blts[b][1]=peek(blt_addr)
+			tank.blts[b][2]=peek(blt_addr+1)
+			tank.blts[b][3]=peek(blt_addr+2)
+		end
+		plyrs[p_num]=tank
+	end
 end
 __gfx__
 000000000bb00b0b0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
