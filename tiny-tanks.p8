@@ -83,6 +83,33 @@ function init_tank(p_num)
 	}
 end
 
+function process_enemy_blts()
+	-- check if we got hit
+ for t=0,#plyrs do
+  if t==selected_player then
+   -- don't worry about 
+   --  our own bullets
+  else
+   -- process enemy bullets
+   for b=1,10 do
+    local blt=plyrs[t].blts[b]
+    if (blt[3] < 8 and 
+        overlap_tank(blt[1],blt[2],1,1,selected_player)) then
+     -- we got hit
+     plyrs[selected_player].hp-=1
+     sfx(8)
+    end
+    if (blt[3] > 7 and 
+        overlap_tank(blt[1],blt[2],5,5,selected_player)) then
+     -- we got hit
+     plyrs[selected_player].hp-=1
+     sfx(7)
+    end
+   end
+  end
+ end
+end
+
 function update_tank(p_num)
  if (selected_player==p_num) then
  	write_gpio(p_num)
@@ -90,6 +117,7 @@ function update_tank(p_num)
  	read_gpio(p_num)
  	return
  end
+ process_enemy_blts()
  if (plyrs[p_num].hp < 0) then
  	return -- is ded
  end
@@ -288,18 +316,20 @@ function collision_bullets(p_num)
    blt[2]=0
 	  plyrs[p_num].blts[b]=blt
   end 
+
   -- check if hitting enemy
-  for t=0,(#plyrs) do
+  for t=0,#plyrs do
    if t==p_num or is_ignore(blt) then
    elseif (overlap_tank(blt[1], blt[2],1,1,t)) then
+
    	blt[1]=0
    	blt[2]=0
    	plyrs[p_num].blts[b]=blt
    	plyrs[t].hp-=1
    	sfx(8)
 	  elseif blt[4]==-2 and
-	   overlap_tank(blt[1], blt[2],5,5,t) then
-	   
+	   overlap_tank(blt[1], blt[2],5,5,t) then	   
+
 	   blt[1]=0
 	   blt[2]=0
 	   plyrs[p_num].blts[b]=blt
