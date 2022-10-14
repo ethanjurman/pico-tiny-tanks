@@ -4,6 +4,13 @@ __lua__
 -- tiny tanks
 -- by ethan jurman
 
+----------------
+-- todo
+--  better diagonal movement
+--  tank explosions
+--  gpio support
+----------------
+
 debug=""
 game_state="menu"
 frame=0
@@ -72,6 +79,14 @@ function init_tank(p_num)
 end
 
 function update_tank(p_num)
+ if (p_num==1) then
+ 	write_gpio(p_num)
+ else 
+ 	--read_gpio(p_num)
+ end
+ if (plyrs[p_num].hp < 0) then
+ 	return -- is ded
+ end
  shoot_bullet(p_num)
  update_bullets(p_num)
  if plyrs[p_num].pushback > 0 then
@@ -138,6 +153,30 @@ function draw_tank_hp(p_num)
 	for hp=1,tank.hp do
   pset(tank.x-4+hp,tank.y+6,8)
  end
+end
+
+function write_gpio(p_num)
+	local tank=plyrs[p_num]
+ -- send player tank number
+	poke(0x5f80, p_num)
+	-- send player x, y
+	poke(0x5f81, tank.x) 
+	poke(0x5f82, tank.y)
+	-- send player direction
+	poke(0x5f83, tank.dir)
+end
+
+function read_gpio(p_num)
+	-- read player tank number
+	p_num=peek(0x5f80)
+	local tank=plyrs[p_num]
+	-- read player x, y
+	tank.x=peek(0x5f81) 
+	tank.y=peek(0x5f82)
+	-- read player direction
+	tank.dir=peek(0x5f83)
+
+	plyrs[p_num]=tank
 end
 
 function draw_tank(p_num)
