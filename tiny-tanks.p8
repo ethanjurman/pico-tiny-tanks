@@ -16,8 +16,13 @@ game_state="menu"
 frame=0
 
 function update_game()
+ if (selected_player==0) then
+	update_tank(1) 	
 	update_tank(0)
-	update_tank(1)
+ else
+	update_tank(0) 	
+	update_tank(1) 	
+ end
 end
 
 function _init()
@@ -49,7 +54,7 @@ function _draw()
 	end
 end
 -->8
--- draw tank
+-- tank
 
 plyrs={}
 
@@ -79,10 +84,10 @@ function init_tank(p_num)
 end
 
 function update_tank(p_num)
- if (p_num==1) then
+ if (selected_player==p_num) then
  	write_gpio(p_num)
- else 
- 	--read_gpio(p_num)
+	else
+ 	read_gpio(p_num)
  end
  if (plyrs[p_num].hp < 0) then
  	return -- is ded
@@ -168,15 +173,16 @@ end
 
 function read_gpio(p_num)
 	-- read player tank number
-	p_num=peek(0x5f80)
-	local tank=plyrs[p_num]
-	-- read player x, y
-	tank.x=peek(0x5f81) 
-	tank.y=peek(0x5f82)
-	-- read player direction
-	tank.dir=peek(0x5f83)
-
-	plyrs[p_num]=tank
+ if (p_num == peek(0x5f80)) then
+		local tank=plyrs[p_num]
+		-- read player x, y
+		tank.x=peek(0x5f81) 
+		tank.y=peek(0x5f82)
+		-- read player direction
+		tank.dir=peek(0x5f83)
+	
+		plyrs[p_num]=tank
+	end
 end
 
 function draw_tank(p_num)
@@ -402,7 +408,8 @@ function start_menu()
 end
 
 function update_menu()
-	if (btnp(❎)) start_game()
+	if (btnp(❎)) start_game(0)
+	if (btnp(🅾️)) start_game(1)
 end
 
 function draw_menu()
@@ -411,7 +418,8 @@ function draw_menu()
 	print("press ❎ to start", 28, 100, frame/4)
 end
 
-function start_game()
+function start_game(plyr_num)
+ selected_player = plyr_num
  game_state="game"
 	init_tank(0)
 	init_tank(1)

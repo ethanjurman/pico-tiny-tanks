@@ -4,7 +4,7 @@ const socket = io();
 //   }-${(new Date().getTime()).toString(36)}`;
 // searchParams.set('roomId', roomId);
 
-// socket.emit('room-join', { roomId });
+socket.emit('room-join', { roomId: 111 });
 
 // const socketPause = () => {
 //   socket.emit("action", { action: 'pause', roomId });
@@ -21,13 +21,23 @@ const socket = io();
 // const socketNewGame = (seed) => {
 //   socket.emit("action", { action: "new-game", seed, roomId });
 // }
-
+let playerId = 0;
 function onFrameUpdate() {
-  socket.emit("tank_update", window.pico8_gpio.slice(0, 4));
-  window.requestAnimationFrame(onFrameUpdate);
+  if (playerId === window.pico8_gpio[0]) {
+    socket.volatile.emit("tank_update", window.pico8_gpio.slice(0, 4));
+  }
+  setTimeout(() => {
+    window.requestAnimationFrame(onFrameUpdate);
+  }, 15)
 }
 
 window.requestAnimationFrame(onFrameUpdate);
+
+socket.on('tank_update_from_server', (updatedTankData) => {
+  for (let i = 0; i < 4; i++) {
+    window.pico8_gpio[i] = updatedTankData[i];
+  }
+})
 
 // socket.on('action', (actionData) => {
 //   if (actionData.action === 'rotate' && actionData.playerId === 1) {

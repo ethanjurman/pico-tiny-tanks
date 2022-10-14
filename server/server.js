@@ -15,15 +15,12 @@ server.listen(PORT, () => console.log(`Server Running\nhttp://localhost:${PORT}`
 
 io.on('connection', (socket) => {
   let roomId;
-  // socket.on('disconnect', () => { });
-  // socket.on('room-join', (evtData) => {
-  //   socket.join(evtData.roomId);
-  //   roomId = evtData.roomId;
-  // })
-  // socket.on('action', (actionData) => {
-  //   socket.to(roomId).emit('action', actionData);
-  // });
+  socket.on('disconnect', () => { });
+  socket.on('room-join', (evtData) => {
+    socket.join(evtData.roomId);
+    roomId = evtData.roomId;
+  })
   socket.on('tank_update', (updatedTankData) => {
-    console.log(updatedTankData);
+    socket.to(roomId).volatile.emit('tank_update_from_server', updatedTankData);
   });
 });
