@@ -18,7 +18,7 @@ __lua__
 debug=""
 game_state="menu"
 frame=0
-num_of_players=4
+num_of_players=6
 selected_player=3
 
 function update_game()
@@ -69,8 +69,8 @@ plyrs={}
 
 function init_tank(p_num)
 	plyrs[p_num]={}
-	plyrs[p_num].x=10*(p_num+1)
-	plyrs[p_num].y=10
+	plyrs[p_num].x=(cos(p_num/6)*50)+62
+	plyrs[p_num].y=(sin(p_num/6)*50)+62
 	plyrs[p_num].dir=0
 	plyrs[p_num].pushback=0
 	plyrs[p_num].hp=10
@@ -93,6 +93,7 @@ function init_tank(p_num)
 end
 
 function get_tank_color(plyr)
+	if plyr==5 then return 14 end
 	return 9+plyr-1
 end
 
@@ -202,9 +203,22 @@ function draw_tank_hp(p_num)
  end
 end
 
+function draw_tank_explode(p_num)
+	circfill(
+	 plyrs[p_num].x+3,
+	 plyrs[p_num].y+3,
+	 frame/4 % 5,
+	 frame/4
+	)
+end
+
 function draw_tank(p_num)
+ if plyrs[p_num].hp==0 then
+  draw_tank_explode(p_num)
+  return
+ end
  draw_tank_hp(p_num)
- pal(11,8+p_num-1)
+ pal(11,get_tank_color(p_num))
  palt(0, true)
  draw_bullets(p_num)
  local x=plyrs[p_num].x
@@ -422,6 +436,9 @@ end
 -->8
 -- start screen
 
+joined=false
+started=false
+
 function start_menu()
 	game_state="menu"
 	music(0)
@@ -433,25 +450,35 @@ function start_menu()
  l_arrow.x=49
  l_arrow.y=64
  l_arrow.shake=0
+ x_shake=0
 end
 
 function update_menu()
  local sp = selected_player
-	if (btnp(❎)) start_game()
-	if (btnp(➡️)) then
+	if (btnp(❎) and not joined) then
+ 	x_shake=10
+  sfx(7)
+	end
+	if (btnp(❎) and joined) start_game()
+	if (btnp(🅾️)) then 
+ 	joined=not joined
+ 	sfx(1)
+	end
+	if (btnp(➡️) and not joined) then
 	 sp+=1
 	 r_arrow.shake=10
 	 sfx(1)
 	end
-	if (btnp(⬅️)) then 
+	if (btnp(⬅️) and not joined) then 
 	 sp-=1
 	 l_arrow.shake=10
 	 sfx(1)
 	end
-	selected_player=sp % 5
+	selected_player=sp % 6
 	
 	if (r_arrow.shake>0) r_arrow.shake-=1
 	if (l_arrow.shake>0) l_arrow.shake-=1
+	if (x_shake>0) x_shake-=1
 end
 
 function draw_title(title_color, title_offset,frame_offset)
@@ -483,7 +510,15 @@ function draw_sides()
 end
 
 function draw_tank_select()
- local x=60
+ local x_offset=0
+ if (r_arrow.shake>4) then
+  x_offset=10-r_arrow.shake
+ elseif (l_arrow.shake>4) then
+  x_offset=-(10-l_arrow.shake)
+ else
+  x_offset=-r_arrow.shake+l_arrow.shake
+ end
+ local x=60+x_offset
  local y=64
  local dir=0
  local h=4
@@ -505,18 +540,34 @@ function draw_tank_select()
  if (dir==3 or dir==4 or dir==5) then
   yf=true
  end
- pal(11,get_tank_color(selected_player))
+ local tank_color = get_tank_color((selected_player
+  - (r_arrow.shake>=5 and 1 or 0)
+  + (l_arrow.shake>=5 and 1 or 0))
+ % 6)
+ pal(11,tank_color)
  palt(0, true)
 	sspr(sx,sy,h,w,x,y,h,w,xf,yf)
 	pal(11,11)
-	print("➡️", 
-	 r_arrow.x+rnd(r_arrow.shake/2),
-	 r_arrow.y-(rnd(r_arrow.shake/2))+(rnd(r_arrow.shake/2)),
-	 get_tank_color((selected_player+1)%5))
- print("⬅️", 
-  l_arrow.x-rnd(l_arrow.shake/2), 
-  l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
-  get_tank_color((selected_player-1)%5))
+	if joined==false then
+		print("➡️", 
+		 r_arrow.x+rnd(r_arrow.shake/2),
+		 r_arrow.y-(rnd(r_arrow.shake/2))+(rnd(r_arrow.shake/2)),
+		 get_tank_color((selected_player+1)%6))
+	 print("⬅️", 
+	  l_arrow.x-rnd(l_arrow.shake/2), 
+	  l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
+	  get_tank_color((selected_player-1)%6))
+	end
+	if joined==true then
+		print("➡️", 
+		 r_arrow.x+rnd(r_arrow.shake/2),
+		 r_arrow.y-(rnd(r_arrow.shake/2))+(rnd(r_arrow.shake/2)),
+		 1)
+	 print("⬅️", 
+	  l_arrow.x-rnd(l_arrow.shake/2), 
+	  l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
+	  1)
+	end
 end
 
 function draw_menu()
@@ -525,7 +576,19 @@ function draw_menu()
  draw_title(11,16,2)
  draw_title(07,16,4)
  draw_sides()
-	print("press ❎ to start", 30, 100, frame/4)
+ local xsx=0 --x_shake,x
+ local xsy=0 --x_shake,y
+ if x_shake>0 then
+  xsx=rnd(x_shake)-2
+  xsy=rnd(x_shake)-2
+ end
+ if joined==false then
+ 	print("press 🅾️ to join", 31, 90, 8+((frame/2)%6))
+ 	print("press ❎ to start", 30+xsx, 100+xsy, 1)
+ elseif joined==true then
+ 	print("press 🅾️ to join", 31, 90, 1)
+ 	print("press ❎ to start", 30, 100, 8+((frame/2)%6))
+ end
 end
 
 function start_game()
@@ -533,7 +596,7 @@ function start_game()
  for i=0,num_of_players-1 do
   init_tank(i)	
  end
-	music(-1)
+	music(4)
 end
 -->8
 -- math functions
@@ -794,15 +857,21 @@ __sfx__
 00010000040101a010050101b01004010000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100000c3400b340093400734007340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100002f61030610326103361000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
-00160000183101f310183101f3101d3101f3101d3101f310183101f310183101f31028310263102831026310183101d310183101d310183101c310183101c310183101d310183101d310183101a3101f3101a310
-001600000c3100c310000000e3000c3000c3000e310103100c3100c310000000000000000000000e310103100e3100e310000000000000000000000e310103100c3100c310000000000000000000000000000000
-001600000000000000103100e310103101131000000000000000000000153101131013310103100000000000000000000015310133101131010310000000000000000000000c310113100c310113100c31011310
+00160000183151f315183151f3151d3151f3151d3151f315183151f315183151f31528315263152831526315183151d315183151d315183151c315183151c315183151d315183151d315183151a3151f3151a315
+001600000c3150c315000050e3050c3050c3050e315103150c3150c315000050000500005000050e315103150e3150e315000050000500005000050e315103150c3150c315000050000500005000050000500005
+001600000000500005103150e315103151131500005000050000500005153151131513315103150000500005000050000515315133151131510315000050000500005000050c315113150c315113150c31511315
 000100001d05006050090501b0500e0500f0501c05000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
 000100001915019150181500b1500d1500e1500000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000
+001600001831527000183151831500000183151c3150000018315000001831518315000001a31518315000001831500000183151831500000183151c315000001f315000001f3151f315000001f3151c3151a315
 __music__
 00 044f4344
 01 04054344
-02 04050644
-03 04424344
-00 09424344
+00 04050644
+02 04050606
+01 09424344
+01 09064344
+00 09054444
+00 09064344
+00 09050444
+02 09050406
 
