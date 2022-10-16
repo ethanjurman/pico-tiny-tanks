@@ -452,14 +452,6 @@ function start_menu()
  l_arrow.x=49
  l_arrow.y=64
  l_arrow.shake=0
- u_arrow={}
- u_arrow.x=0
- u_arrow.y=0
- u_arrow.shake=0
- d_arrow={}
- d_arrow.x=0
- d_arrow.y=0
- d_arrow.shake=0
  x_shake=0
  go_to_room()
 end
@@ -470,10 +462,6 @@ function go_to_room()
  r_arrow.y=50
  l_arrow.x=38
  l_arrow.y=50
- u_arrow.x=39
- u_arrow.y=44
- d_arrow.x=39
- d_arrow.y=56
 end
 
 function go_to_tank()
@@ -482,10 +470,6 @@ function go_to_tank()
  r_arrow.y=64
  l_arrow.x=49
  l_arrow.y=64
- u_arrow.x=-10
- u_arrow.y=-10
- d_arrow.x=-10
- d_arrow.y=-10
 end
 
 function go_to_ready()
@@ -494,10 +478,6 @@ function go_to_ready()
  r_arrow.y=-10
  l_arrow.x=-10
  l_arrow.y=-10
- u_arrow.x=-10
- u_arrow.y=-10
- d_arrow.x=-10
- d_arrow.y=-10
 end
 
 function update_menu()
@@ -506,8 +486,6 @@ function update_menu()
 	-- update the shakes
 	if (r_arrow.shake>0) r_arrow.shake-=1
 	if (l_arrow.shake>0) l_arrow.shake-=1
-	if (u_arrow.shake>0) u_arrow.shake-=1
-	if (d_arrow.shake>0) d_arrow.shake-=1
 	if (x_shake>0) x_shake-=1
 	
  -- has both room and tank
@@ -551,13 +529,11 @@ function update_menu()
 	 if (btnp(⬆️)) then
 	  room_code[room_code_index]+=1
 	  room_code[room_code_index]=room_code[room_code_index]%10
-	  u_arrow.shake=10
 	  sfx(1)
 	 end
 	 if (btnp(⬇️)) then
 	  room_code[room_code_index]-=1 
 	  room_code[room_code_index]=room_code[room_code_index]%10
-	  d_arrow.shake=10
 	  sfx(1)
 	 end
 	 return
@@ -656,19 +632,20 @@ function draw_room_code()
 		 l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
 	  7)
 	 offsetx=room_code_index*8
-	 print("⬆️",
-	  u_arrow.x+rnd(u_arrow.shake/2)-(rnd(u_arrow.shake/2))+offsetx, 
-		 u_arrow.y-rnd(u_arrow.shake/2), 
-	  7)
-	 print("⬇️",
-	  d_arrow.x+rnd(d_arrow.shake/2)-(rnd(d_arrow.shake/2))+offsetx,
-		 d_arrow.y+rnd(d_arrow.shake/2), 
-	  7)
+	 print("_",41+offsetx, 52, 11)
 	end
-	print(room_code[1].." "..
-	      room_code[2].." "..
-	      room_code[3].." "..
-	      room_code[4], 49,50, 7)
+	print("room code", 45, 42, menu_state=="room" and 11 or 7)
+	if (menu_state=="room") then
+	 print(room_code[1], 49,50, room_code_index==1 and 11 or 7)
+	 print(room_code[2], 57,50, room_code_index==2 and 11 or 7)
+	 print(room_code[3], 65,50, room_code_index==3 and 11 or 7)
+	 print(room_code[4], 73,50, room_code_index==4 and 11 or 7)
+	else
+	 print(room_code[1].." "..
+	       room_code[2].." "..
+	       room_code[3].." "..
+	       room_code[4], 49,50, 7)
+	end
 end
 
 function draw_menu()
