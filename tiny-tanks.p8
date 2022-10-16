@@ -436,8 +436,10 @@ end
 -->8
 -- start screen
 
-joined=false
-started=false
+-- menu state
+-- can be:room, tank, or ready
+menu_state="room"
+room_code_index=1
 
 function start_menu()
 	game_state="menu"
@@ -450,35 +452,116 @@ function start_menu()
  l_arrow.x=49
  l_arrow.y=64
  l_arrow.shake=0
+ u_arrow={}
+ u_arrow.x=0
+ u_arrow.y=0
+ u_arrow.shake=0
+ d_arrow={}
+ d_arrow.x=0
+ d_arrow.y=0
+ d_arrow.shake=0
  x_shake=0
+ go_to_room()
+end
+
+function go_to_room()
+	menu_state="room"
+	r_arrow.x=80
+ r_arrow.y=50
+ l_arrow.x=38
+ l_arrow.y=50
+ u_arrow.x=39
+ u_arrow.y=44
+ d_arrow.x=39
+ d_arrow.y=56
+end
+
+function go_to_tank()
+ menu_state="tank"
+ r_arrow.x=68
+ r_arrow.y=64
+ l_arrow.x=49
+ l_arrow.y=64
+ u_arrow.x=-10
+ u_arrow.y=-10
+ d_arrow.x=-10
+ d_arrow.y=-10
+end
+
+function go_to_ready()
+ menu_state="ready"
+ r_arrow.x=-10
+ r_arrow.y=-10
+ l_arrow.x=-10
+ l_arrow.y=-10
+ u_arrow.x=-10
+ u_arrow.y=-10
+ d_arrow.x=-10
+ d_arrow.y=-10
 end
 
 function update_menu()
  local sp = selected_player
-	if (btnp(❎) and not joined) then
- 	x_shake=10
-  sfx(7)
-	end
-	if (btnp(❎) and joined) start_game()
-	if (btnp(🅾️)) then 
- 	joined=not joined
- 	sfx(1)
-	end
-	if (btnp(➡️) and not joined) then
-	 sp+=1
-	 r_arrow.shake=10
-	 sfx(1)
-	end
-	if (btnp(⬅️) and not joined) then 
-	 sp-=1
-	 l_arrow.shake=10
-	 sfx(1)
-	end
-	selected_player=sp % 6
-	
+ 
+	-- update the shakes
 	if (r_arrow.shake>0) r_arrow.shake-=1
 	if (l_arrow.shake>0) l_arrow.shake-=1
+	if (u_arrow.shake>0) u_arrow.shake-=1
+	if (d_arrow.shake>0) d_arrow.shake-=1
 	if (x_shake>0) x_shake-=1
+	
+ -- has both room and tank
+ if menu_state=="ready" then
+  if (btnp(❎)) start_game()
+  if (btnp(🅾️)) go_to_tank()
+  return
+ end
+ 
+ -- selecting a tank
+ if menu_state=="tank" then
+  if (btnp(➡️)) then
+	  sp+=1
+	  r_arrow.shake=10
+	  sfx(1)
+	 end
+	 if (btnp(⬅️)) then 
+	  sp-=1
+	  l_arrow.shake=10
+	  sfx(1)
+	 end
+	 if (btnp(❎)) go_to_ready()
+	 if (btnp(🅾️)) go_to_room()
+	 selected_player=sp % 6
+	 return
+ end
+ 
+ -- selecting a room
+ if menu_state=="room" then
+  if (btnp(❎)) go_to_tank()
+  if (btnp(➡️)) then
+	  r_arrow.shake=10
+	  room_code_index+=1
+	  sfx(1)
+	 end
+	 if (btnp(⬅️)) then 
+	  l_arrow.shake=10
+	  room_code_index-=1
+	  sfx(1)
+	 end
+	 if (btnp(⬆️)) then
+	  room_code[room_code_index]+=1
+	  room_code[room_code_index]=room_code[room_code_index]%10
+	  u_arrow.shake=10
+	  sfx(1)
+	 end
+	 if (btnp(⬇️)) then
+	  room_code[room_code_index]-=1 
+	  room_code[room_code_index]=room_code[room_code_index]%10
+	  d_arrow.shake=10
+	  sfx(1)
+	 end
+	 return
+ end
 end
 
 function draw_title(title_color, title_offset,frame_offset)
@@ -511,13 +594,15 @@ end
 
 function draw_tank_select()
  local x_offset=0
- if (r_arrow.shake>4) then
-  x_offset=10-r_arrow.shake
- elseif (l_arrow.shake>4) then
-  x_offset=-(10-l_arrow.shake)
- else
-  x_offset=-r_arrow.shake+l_arrow.shake
- end
+ if menu_state=="tank" then
+	 if (r_arrow.shake>4) then
+	  x_offset=10-r_arrow.shake
+	 elseif (l_arrow.shake>4) then
+	  x_offset=-(10-l_arrow.shake)
+	 else
+	  x_offset=-r_arrow.shake+l_arrow.shake
+	 end
+	end
  local x=60+x_offset
  local y=64
  local dir=0
@@ -548,7 +633,7 @@ function draw_tank_select()
  palt(0, true)
 	sspr(sx,sy,h,w,x,y,h,w,xf,yf)
 	pal(11,11)
-	if joined==false then
+	if menu_state=="tank" then
 		print("➡️", 
 		 r_arrow.x+rnd(r_arrow.shake/2),
 		 r_arrow.y-(rnd(r_arrow.shake/2))+(rnd(r_arrow.shake/2)),
@@ -558,16 +643,32 @@ function draw_tank_select()
 	  l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
 	  get_tank_color((selected_player-1)%6))
 	end
-	if joined==true then
-		print("➡️", 
+end
+
+function draw_room_code()
+ if menu_state=="room" then
+	 print("➡️", 
 		 r_arrow.x+rnd(r_arrow.shake/2),
 		 r_arrow.y-(rnd(r_arrow.shake/2))+(rnd(r_arrow.shake/2)),
-		 1)
-	 print("⬅️", 
-	  l_arrow.x-rnd(l_arrow.shake/2), 
-	  l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
-	  1)
+		 7)
+		print("⬅️", 
+		 l_arrow.x-rnd(l_arrow.shake/2), 
+		 l_arrow.y+rnd(l_arrow.shake/2)-(rnd(l_arrow.shake/2)), 
+	  7)
+	 offsetx=room_code_index*8
+	 print("⬆️",
+	  u_arrow.x+rnd(u_arrow.shake/2)-(rnd(u_arrow.shake/2))+offsetx, 
+		 u_arrow.y-rnd(u_arrow.shake/2), 
+	  7)
+	 print("⬇️",
+	  d_arrow.x+rnd(d_arrow.shake/2)-(rnd(d_arrow.shake/2))+offsetx,
+		 d_arrow.y+rnd(d_arrow.shake/2), 
+	  7)
 	end
+	print(room_code[1].." "..
+	      room_code[2].." "..
+	      room_code[3].." "..
+	      room_code[4], 49,50, 7)
 end
 
 function draw_menu()
@@ -576,18 +677,18 @@ function draw_menu()
  draw_title(11,16,2)
  draw_title(07,16,4)
  draw_sides()
- local xsx=0 --x_shake,x
- local xsy=0 --x_shake,y
- if x_shake>0 then
-  xsx=rnd(x_shake)-2
-  xsy=rnd(x_shake)-2
- end
- if joined==false then
- 	print("press 🅾️ to join", 31, 90, 8+((frame/2)%6))
- 	print("press ❎ to start", 30+xsx, 100+xsy, 1)
- elseif joined==true then
- 	print("press 🅾️ to join", 31, 90, 1)
- 	print("press ❎ to start", 30, 100, 8+((frame/2)%6))
+ draw_room_code()
+ color_stale=7
+ color_flash=8+((frame/2)%6)
+ if menu_state=="room" then
+  print("", 31, 90, color_stale)
+ 	print("press ❎ to lock in room", 18, 100, color_flash)
+ elseif menu_state=="tank" then
+ 	print("press 🅾️ to change room", 19, 90, color_stale)
+ 	print("press ❎ to pick a tank", 19, 100, color_flash)
+ elseif menu_state=="ready" then
+ 	print("press 🅾️ to change tank", 19, 90, color_stale)
+ 	print("press ❎ to start", 30, 100, color_flash)
  end
 end
 
@@ -621,6 +722,8 @@ function overlap_tank(x1,y1,h1,w1,tank_num)
 end
 -->8
 -- gpio (◆netcode◆)
+
+room_code = {0,0,0,0}
 
 function write_gpio(p_num)
 	local tank=plyrs[p_num]
