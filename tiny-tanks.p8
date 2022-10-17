@@ -32,7 +32,8 @@ function update_game()
  update_tank(selected_player)
 end
 
-function _init()
+function _init() 
+ poke(0x5f80, 100) -- prevent red tank explosion bug
 	start_menu()
 end
 
@@ -51,14 +52,14 @@ function _draw()
 	 cls()
 	 palt(0,false)
 	 map()
-	 --print("debug:"..debug,8,0,7)
+	 print("debug:"..debug,8,0,7)
 	 for i=0,num_of_players-1 do
    draw_tank(i)
 		end
 	end
 	if game_state=="menu" then
 	 cls()
-	 --print("debug:"..debug,8,0,7)
+	 print("debug:"..debug,8,0,7)
 	 draw_menu()
 	end
 end
@@ -108,6 +109,7 @@ function process_enemy_blts()
    for b=1,10 do
     local blt=plyrs[t].blts[b]
     if (blt[3] < 8 and 
+        not is_ignore(blt) and
         overlap_tank(blt[1],blt[2],1,1,selected_player)) then
      -- we got hit
      plyrs[selected_player].hp=max(plyrs[selected_player].hp-1,0)
@@ -526,6 +528,8 @@ function update_menu()
 	  room_code_index-=1
 	  sfx(1)
 	 end
+	 if (room_code_index>4) room_code_index=1
+	 if (room_code_index<1) room_code_index=4
 	 if (btnp(⬆️)) then
 	  room_code[room_code_index]+=1
 	  room_code[room_code_index]=room_code[room_code_index]%10
@@ -702,6 +706,15 @@ end
 
 room_code = {0,0,0,0}
 
+-- returns a room code
+--  1,0,1,0 -> 10, 10
+function get_room_code()
+	return {
+	 room_code[1]..room_code[2],
+	 room_code[3]..room_code[4]
+	}
+end
+
 function write_gpio(p_num)
 	local tank=plyrs[p_num]
  -- send player tank number
@@ -721,6 +734,10 @@ function write_gpio(p_num)
 		poke(blt_addr+1, tank.blts[b][2])
 		poke(blt_addr+2, tank.blts[b][3])
 	end
+	rc1=get_room_code()[1]
+	rc2=get_room_code()[2]
+	poke(0x5ffe, rc1)
+	poke(0x5fff, rc2)
 end
 
 function read_gpio(p_num)

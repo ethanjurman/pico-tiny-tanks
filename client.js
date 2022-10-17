@@ -1,8 +1,14 @@
 const socket = io();
 
-socket.emit('room-join', { roomId: 111 });
-
 let playerId = null;
+
+let roomCodeInterval = setInterval(() => {
+  if (window.pico8_gpio[126] && window.pico8_gpio[127]) {
+    console.log(window.pico8_gpio[126], window.pico8_gpio[127])
+    clearInterval(roomCodeInterval);
+    socket.emit('room-join', { roomId: `${`${window.pico8_gpio[126]}`.padStart(2, '0')}${`${window.pico8_gpio[127]}`.padStart(2, '0')}` });
+  }
+}, 30);
 
 function onFrameUpdate() {
   if (window.pico8_gpio[0] !== undefined && playerId === null) {
